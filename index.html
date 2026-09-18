@@ -117,6 +117,25 @@ h1{font-size:27px;text-align:center;margin:12px 0 6px;letter-spacing:6px;font-we
 #result .card:nth-child(3){animation-delay:.14s}
 #result .card:nth-child(4){animation-delay:.21s}
 #result .card:nth-child(5){animation-delay:.28s}
+/* ===== 星座详解 ===== */
+.xz-hero{display:flex;align-items:center;gap:14px;padding:16px;border-radius:18px;background:linear-gradient(135deg,rgba(124,92,255,.14),rgba(255,107,157,.14));margin-bottom:12px}
+.xz-emoji{font-size:44px;line-height:1}
+.xz-name{font-size:20px;font-weight:800;letter-spacing:2px}
+.xz-dates{font-size:12px;color:var(--muted);margin-top:4px}
+.xz-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.xz-chips span{font-size:12px;padding:5px 12px;border-radius:999px;background:rgba(124,92,255,.10);color:#6f6a7d;border:1px solid rgba(124,92,255,.18)}
+.xz-line{font-size:14px;font-weight:700;text-align:center;padding:12px 14px;border-radius:14px;background:rgba(255,107,157,.10);color:#c2437f;margin-bottom:12px;line-height:1.7}
+.xz-keys{display:flex;flex-wrap:wrap;gap:4px 10px;margin-bottom:4px}
+.xz-keys span{font-size:12px;color:var(--g1);font-weight:700}
+.xz-sec{margin-top:12px}
+.xz-sec h4{font-size:14px;margin:0 0 6px;letter-spacing:1px}
+.xz-sec p{font-size:13px;color:#4a4557;line-height:1.9;margin:0}
+.xz-combo{margin-top:14px;font-size:13px;line-height:1.8;padding:12px 14px;border-radius:14px;background:linear-gradient(135deg,rgba(124,92,255,.12),rgba(255,107,157,.12));border:1px dashed rgba(124,92,255,.35)}
+.xz-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.xz-grid button{border:1px solid rgba(124,92,255,.2);background:rgba(255,255,255,.7);border-radius:12px;padding:8px 4px;font-size:12px;color:#4a4557;cursor:pointer}
+.xz-grid button .e{font-size:20px;display:block;line-height:1.4}
+.xz-grid button.on{background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;border-color:transparent;font-weight:700}
+.xz-back{display:block;margin:10px auto 0;font-size:12px;color:var(--g1);background:none;border:none;cursor:pointer}
 </style>
 </head>
 <body>
@@ -139,7 +158,7 @@ h1{font-size:27px;text-align:center;margin:12px 0 6px;letter-spacing:6px;font-we
 </div>
 
 <div id="result" class="hidden">
-<div class="tabs"><button id="tabJian" class="on">简盘</button><button id="tabXi">细盘</button></div>
+<div class="tabs"><button id="tabJian" class="on">简盘</button><button id="tabXi">细盘</button><button id="tabXz">星座</button></div>
 <div id="paneJian">
 <div class="card"><h2>我的命盘</h2>
 <div class="meta" id="rMeta"></div>
@@ -165,6 +184,9 @@ h1{font-size:27px;text-align:center;margin:12px 0 6px;letter-spacing:6px;font-we
 </div>
 <div class="card"><h2>基本信息</h2><div id="rBasic"></div></div>
 </div><!-- /paneXi -->
+<div id="paneXz" class="hidden">
+<div class="card"><h2>星座详解</h2><div id="rXingzuo"></div></div>
+</div><!-- /paneXz -->
 </div>
 
 <div class="foot">八字排盘 · 年轻人版 😌<br>仅供学习娱乐参考</div>
@@ -8813,12 +8835,14 @@ Array.prototype.forEach.call($('fGender').querySelectorAll('button'),function(b)
 });
 $('tabJian').addEventListener('click',function(){switchTab('jian');});
 $('tabXi').addEventListener('click',function(){switchTab('xi');});
+$('tabXz').addEventListener('click',function(){switchTab('xz');});
 function switchTab(which){
-  var jian=which==='jian';
-  $('tabJian').classList.toggle('on',jian);
-  $('tabXi').classList.toggle('on',!jian);
-  $('paneJian').classList.toggle('hidden',!jian);
-  $('paneXi').classList.toggle('hidden',jian);
+  $('tabJian').classList.toggle('on',which==='jian');
+  $('tabXi').classList.toggle('on',which==='xi');
+  $('tabXz').classList.toggle('on',which==='xz');
+  $('paneJian').classList.toggle('hidden',which!=='jian');
+  $('paneXi').classList.toggle('hidden',which!=='xi');
+  $('paneXz').classList.toggle('hidden',which!=='xz');
 }
 $('demoBtn').addEventListener('click',function(){
   $('fName').value='';
@@ -8922,6 +8946,8 @@ function doPaipan(){
   renderXipan(ec,dg,curDy,curLn);
   /* ===== 基本信息 ===== */
   renderBasic(lunar,solar,ec,dp,tp);
+  /* ===== 星座详解 ===== */
+  renderXingzuo(solar,dg);
 
   switchTab('jian');
   $('result').classList.remove('hidden');
@@ -9019,6 +9045,68 @@ function renderBasic(lunar,solar,ec,dp,tp){
   $('rBasic').innerHTML=rows.map(function(r){
     return '<div class="kv"><span class="k">'+r[0]+'</span><span style="text-align:right;max-width:70%">'+esc(r[1])+'</span></div>';
   }).join('');
+}
+/* ---------- 星座详解 ---------- */
+var XZ=[
+{n:'白羊座',s:'♈',e:'🔥',d:'3.21 – 4.19',el:'火象',q:'开创',r:'火星',k:['行动派','直球','热血','急性子'],line:'想一出是一出，执行力能秒杀 90% 的人类。',x:'天生的行动派，想到就做，最烦拖泥带水。脾气来得快去得也快，吵完架转头就忘，隔夜仇不存在的。',l:'喜欢就直球出击，暧昧期对白羊来说不存在。需要新鲜感和崇拜，冷暴力是感情里的头号杀手。',w:'适合开荒型工作：创业、销售、竞技类。讨厌重复流程，工位是坐不住的，越有挑战越兴奋。',m:'赚钱靠冲劲，花钱靠心情。投资容易上头，定投这种"自动挡"理财更适合你。',lu:['红色','9','星期二'],mt:['狮子座','射手座']},
+{n:'金牛座',s:'♉',e:'🐂',d:'4.20 – 5.20',el:'土象',q:'固定',r:'金星',k:['务实','固执','美食家','安全感'],line:'可以不浪漫，但不能没钱；可以吵架，但不能饿着。',x:'稳字当头，认定的事九头牛都拉不回。对美和美食有执念，是享受型务实主义者。',l:'慢热但长情，确认关系前考察期巨长。一旦认定就是奔着过日子去的，安全感给满。',w:'财务、设计、美食、艺术都很对味。靠谱耐操，是团队里的定海神针。',m:'十二星座理财 Top 选手，存钱有瘾。缺点是太保守，容易错过风口，适当冒险没坏处。',lu:['绿色','6','星期五'],mt:['处女座','摩羯座']},
+{n:'双子座',s:'♊',e:'👯',d:'5.21 – 6.21',el:'风象',q:'变动',r:'水星',k:['社交达人','好奇宝宝','嘴炮王者','双面'],line:'不是花心，是每一面都值得被爱。',x:'大脑永远在线，对什么都好奇三分钟。社交场合的气氛组组长，i 人 e 人自由切换。',l:'喜欢聪明有趣的灵魂，聊得来比长得好看重要。需要个人空间，太黏会窒息。',w:'媒体、公关、销售、创作类如鱼得水。信息搬运工本工，学东西飞快，触类旁通。',m:'偏财靠信息差，但定力不足容易追涨杀跌。适合轻资产、短平快的赚钱方式。',lu:['黄色','5','星期三'],mt:['天秤座','水瓶座']},
+{n:'巨蟹座',s:'♋',e:'🦀',d:'6.22 – 7.22',el:'水象',q:'开创',r:'月亮',k:['顾家','敏感','护短','情绪化'],line:'表面云淡风轻，内心已经演完八十集连续剧。',x:'外壳坚硬内心柔软，对在乎的人掏心掏肺。安全感雷达极灵，细节控晚期患者。',l:'居家型恋人，谈恋爱就是过日子的预演。吃醋从来不说，等你猜，猜对了加分。',w:'适合照顾人的行业：教育、医疗、餐饮、母婴。直觉准，是决策前值得问一句的"感觉派"顾问。',m:'存钱为了买房，安全感具象化。情绪化消费是漏财主因，购物车加个冷静期吧。',lu:['银白色','2','星期一'],mt:['天蝎座','双鱼座']},
+{n:'狮子座',s:'♌',e:'🦁',d:'7.23 – 8.22',el:'火象',q:'固定',r:'太阳',k:['霸气','爱面子','慷慨','戏精'],line:'可以输，但不能输得没面子。',x:'天生的主角，走到哪都是 C 位。重情重义，对自己人极其护短，花钱大手大脚。',l:'喜欢被崇拜，夸就完事了。占有欲偏强，但浪漫起来也是顶级的。',w:'天生领导者，适合台前工作：管理、演艺、品牌。越被看见越来劲，掌声是燃料。',m:'赚钱能力强，花钱能力更强。面子消费是大头，学会说"不"能存下不少。',lu:['金色','1','星期日'],mt:['白羊座','射手座']},
+{n:'处女座',s:'♍',e:'🌾',d:'8.23 – 9.22',el:'土象',q:'变动',r:'水星',k:['完美主义','细节控','毒舌','服务型'],line:'不是挑剔，是这个世界配不上我的标准。',x:'细节显微镜，逻辑拉满。刀子嘴豆腐心，吐槽你是因为在乎你，陌生人还不值得。',l:'理性派，用考察报告谈恋爱。一旦通过审核，忠诚度直接拉满，售后一流。',w:'数据分析、品控、医疗、编辑，越细越强。是团队里最靠谱的补位选手。',m:'记账小能手，每一分钱都有名分。适合稳健型投资，复利是好朋友。',lu:['米色','5','星期三'],mt:['金牛座','摩羯座']},
+{n:'天秤座',s:'♎',e:'⚖️',d:'9.23 – 10.23',el:'风象',q:'开创',r:'金星',k:['颜控','选择困难','老好人','优雅'],line:'不是没主见，是每个选项都想要。',x:'和谐大使，吵架会先道歉（心里不服）。审美在线，颜值即正义。',l:'恋爱脑浓度偏高，单身会焦虑。需要势均力敌的伴侣，单方面付出久了会失衡。',w:'公关、外交、设计、法律，靠情商和审美吃饭。团队润滑剂本剂。',m:'为颜值和社交买单不少。人脉就是钱脉，合作运强于单打独斗。',lu:['粉色','7','星期五'],mt:['双子座','水瓶座']},
+{n:'天蝎座',s:'♏',e:'🦂',d:'10.24 – 11.22',el:'水象',q:'固定',r:'冥王星',k:['神秘','记仇','深情','洞察'],line:'我可以原谅你，但我不会忘记。',x:'人间心理侧写师，看人极准。爱憎分明，要么深交要么拉黑，没有中间地带。',l:'爱得浓烈，占有欲天花板。出轨只有 0 次和无数次，信任一旦破碎无法修复。',w:'适合深水区工作：研究、金融、心理、刑侦。越复杂越兴奋，浅滩待不住。',m:'偏财嗅觉极强，适合长线布局。对钱有掌控欲，财务必须自己说了算。',lu:['深紫色','8','星期二'],mt:['巨蟹座','双鱼座']},
+{n:'射手座',s:'♐',e:'🏹',d:'11.23 – 12.21',el:'火象',q:'变动',r:'木星',k:['自由','乐观','博爱','说走就走'],line:'世界那么大，我想去看看——现在、立刻、马上。',x:'乐天派本派，烦恼不过夜。热爱自由，束缚感是第一杀手。',l:'喜欢一起疯的玩伴，管太严会跑路。认真起来也很专一，只是需要长期考察。',w:'旅游、教育、户外、国际相关。适合不坐班的工作，越自由产出越高。',m:'心大，花钱如流水但赚钱运也不差。适合"先存后花"，强制储蓄保平安。',lu:['紫色','3','星期四'],mt:['白羊座','狮子座']},
+{n:'摩羯座',s:'♑',e:'🐐',d:'12.22 – 1.19',el:'土象',q:'开创',r:'土星',k:['工作狂','靠谱','闷骚','长期主义'],line:'你们先玩，我把未来十年规划完就来。',x:'表面高冷，熟了之后闷骚。目标导向，延迟满足大师，靠谱本谱。',l:'慢热中的慢热，用行动代替情话。认定了就是一辈子的事，轻易不换人。',w:'天生事业脑：管理、金融、工程都很稳。大器晚成型，越老越吃香。',m:'理财纪律性最强，复利思维。年轻时存钱，中年后躺赢。',lu:['深灰色','10','星期六'],mt:['金牛座','处女座']},
+{n:'水瓶座',s:'♒',e:'🏺',d:'1.20 – 2.18',el:'风象',q:'固定',r:'天王星',k:['特立独行','脑洞','博爱','外星人'],line:'我不是奇怪，是你们还没进化到我的版本。',x:'反传统先锋，越不让干越想试。朋友遍天下，知己没几个，精神世界很忙。',l:'需要精神共鸣，柏拉图式开局。查岗会触发逆反，保持神秘感更长久。',w:'科技、创新、公益、新媒体。适合前沿领域，常规路线会枯萎。',m:'赚钱路子野，副业脑发达。但三分钟热度，项目容易烂尾，找人合伙盯进度。',lu:['天蓝色','4','星期六'],mt:['双子座','天秤座']},
+{n:'双鱼座',s:'♓',e:'🐟',d:'2.19 – 3.20',el:'水象',q:'变动',r:'海王星',k:['浪漫','共情','爱幻想','耳根软'],line:'现实太苦了，我先去梦里躲一会儿。',x:'共情能力拉满，别人难过自己先哭。艺术细胞丰富，习惯给世界加滤镜。',l:'为爱而生，仪式感不能少。容易感动也容易心软，要学会拒绝。',w:'艺术、影视、疗愈、公益。靠感觉和灵感工作，KPI 是天敌。',m:'对钱没概念，花钱凭感觉。建议找个靠谱的人管钱，或者定投保底。',lu:['海蓝色','12','星期四'],mt:['巨蟹座','天蝎座']}
+];
+var XZ_MY=0, XZ_DG='';
+function xzCombo(z){
+  var dg=XZ_DG, wx=(typeof GAN_WX!=='undefined'&&GAN_WX[dg])?GAN_WX[dg]:'';
+  var head='✨ <b>星座 × 八字</b>：';
+  var me={'火象':'火','土象':'土','水象':'水'}[z.el]||'';
+  if(me&&me===wx){
+    var s={'火':'火上加火，热情和执行力都翻倍，唯一提醒：偶尔踩踩刹车','土':'双倍务实，稳如定海神针，记得允许自己偶尔冲动一次','水':'水上加水，直觉共情拉满，情绪内耗记得及时断舍离'}[me];
+    return head+z.el+'遇上'+esc(dg+wx)+'日主，'+s+'。';
+  }
+  var g={'火象':'行动力拉满','土象':'稳扎稳打，适合长期主义','风象':'脑洞大、想法快，找个执行派搭档更完美','水象':'细腻是你的超能力'}[z.el];
+  return head+z.n+'的'+g+(wx?('，配上'+esc(dg+wx)+'日主'):'')+'，是个挺有意思的组合。';
+}
+function paintXZ(i){
+  var z=XZ[i], h='';
+  h+='<div class="xz-hero"><div class="xz-emoji">'+z.e+'</div><div><div class="xz-name">'+z.n+' '+z.s+'</div><div class="xz-dates">'+z.d+'</div></div></div>';
+  h+='<div class="xz-chips"><span>'+z.el+'</span><span>'+z.q+'星座</span><span>守护星 · '+z.r+'</span></div>';
+  h+='<div class="xz-line">“'+z.line+'”</div>';
+  h+='<div class="xz-keys">'+z.k.map(function(k){return '<span>#'+k+'</span>';}).join('')+'</div>';
+  h+='<div class="xz-sec"><h4>🌟 性格</h4><p>'+z.x+'</p></div>';
+  h+='<div class="xz-sec"><h4>💘 爱情</h4><p>'+z.l+'</p></div>';
+  h+='<div class="xz-sec"><h4>💼 事业</h4><p>'+z.w+'</p></div>';
+  h+='<div class="xz-sec"><h4>💰 财运</h4><p>'+z.m+'</p></div>';
+  h+='<div class="xz-sec"><h4>🍀 幸运物</h4><p>幸运色 <b>'+z.lu[0]+'</b>　幸运数字 <b>'+z.lu[1]+'</b>　幸运日 <b>'+z.lu[2]+'</b></p></div>';
+  h+='<div class="xz-sec"><h4>💞 绝配星座</h4><p>'+z.mt.join('、')+'</p></div>';
+  h+='<div class="xz-combo">'+xzCombo(z)+'</div>';
+  h+='<div class="xz-grid">'+XZ.map(function(s2,j){return '<button data-i="'+j+'" class="'+(j===i?'on':'')+'"><span class="e">'+s2.e+'</span>'+s2.n+'</button>';}).join('')+'</div>';
+  if(i!==XZ_MY)h+='<button class="xz-back" data-back="1">← 回到我的星座</button>';
+  $('rXingzuo').innerHTML=h;
+}
+function renderXingzuo(solar,dg){
+  XZ_DG=dg||'';
+  var nm='';try{nm=solar.getXingZuo();}catch(e){}
+  var map={'白羊':0,'金牛':1,'双子':2,'巨蟹':3,'狮子':4,'处女':5,'天秤':6,'天蝎':7,'射手':8,'摩羯':9,'水瓶':10,'双鱼':11};
+  XZ_MY=(nm in map)?map[nm]:0;
+  paintXZ(XZ_MY);
+  var box=$('rXingzuo');
+  if(box&&!box.getAttribute('data-bound')){
+    box.setAttribute('data-bound','1');
+    box.addEventListener('click',function(ev){
+      var t=ev.target;
+      while(t&&t!==box&&!t.getAttribute('data-i')&&!t.getAttribute('data-back'))t=t.parentNode;
+      if(!t||t===box)return;
+      if(t.getAttribute('data-back')){paintXZ(XZ_MY);return;}
+      var i=+t.getAttribute('data-i');if(!isNaN(i))paintXZ(i);
+    });
+  }
 }
 /* node 测试用导出（浏览器环境无 module，不受影响） */
 if(typeof module!=='undefined'&&module.exports){module.exports={shiShen:shiShen,diShi:diShi,shenSha:shenSha,NAYIN:NAYIN,BENQI:BENQI};}
