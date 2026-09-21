@@ -1,0 +1,151 @@
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --ink:#2d2a32; --muted:#8b8496;
+  --g1:#7c5cff; --g2:#ff6b9d;
+}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  background:linear-gradient(165deg,#fff6ec 0%,#f7ecff 52%,#e9f2ff 100%);color:var(--ink);min-height:100vh}
+.blob{position:fixed;border-radius:50%;filter:blur(80px);opacity:.55;pointer-events:none;z-index:0}
+.blob.a{width:280px;height:280px;background:#ffd3e6;top:-70px;left:-70px}
+.blob.b{width:320px;height:320px;background:#cfdefc;bottom:-90px;right:-70px}
+.blob.c{width:200px;height:200px;background:#e6d6ff;top:38%;right:-70px;opacity:.4}
+.wrap{position:relative;z-index:1;max-width:640px;margin:0 auto;padding:18px 14px 44px}
+h1{font-size:27px;text-align:center;margin:12px 0 6px;letter-spacing:6px;font-weight:800;
+  background:linear-gradient(92deg,var(--g1),var(--g2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{text-align:center;margin-bottom:16px}
+.sub span{display:inline-block;font-size:12px;color:#6f6a7d;background:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.9);
+  padding:5px 14px;border-radius:999px;box-shadow:0 2px 8px rgba(124,92,255,.10)}
+.card{background:rgba(255,255,255,.82);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,.85);border-radius:22px;padding:18px 16px;margin-bottom:14px;
+  box-shadow:0 10px 28px rgba(124,92,255,.10)}
+.card h2{font-size:15px;margin:0 0 14px;letter-spacing:2px;display:flex;align-items:center;gap:8px}
+.card h2::before{content:"";width:9px;height:9px;border-radius:50%;background:linear-gradient(135deg,var(--g1),var(--g2));
+  box-shadow:0 0 10px rgba(255,107,157,.55)}
+.row{margin-bottom:13px}
+.row label{display:block;font-size:13px;color:var(--muted);margin-bottom:7px}
+.row input[type=text],.row input[type=date],.row input[type=time]{display:block;width:100%;max-width:100%;min-width:0;min-height:52px;
+  font-size:16px;padding:12px 14px;
+  border:1.5px solid #e9e2f5;border-radius:15px;background:rgba(255,255,255,.92);color:var(--ink);outline:none;
+  transition:border-color .2s, box-shadow .2s}
+.row input:focus{border-color:var(--g1);box-shadow:0 0 0 4px rgba(124,92,255,.12)}
+/* iOS 上 date/time 输入框的原生外观会无视 width:100% 导致超出卡片，只在 iOS 生效 */
+@supports (-webkit-touch-callout:none){
+  .row input[type=date],.row input[type=time]{-webkit-appearance:none;appearance:none;}
+}
+.seg{display:flex;gap:8px;background:#f3eefb;border-radius:16px;padding:5px}
+.seg button{flex:1;padding:10px;border:none;border-radius:12px;background:transparent;font-size:15px;color:#7a7390;transition:all .2s}
+.seg button.on{background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;font-weight:700;
+  box-shadow:0 4px 12px rgba(255,107,157,.35)}
+.btn{width:100%;padding:14px;font-size:16px;font-weight:700;border:none;border-radius:16px;letter-spacing:3px;margin-top:6px;
+  background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;
+  box-shadow:0 8px 20px rgba(255,107,157,.38);transition:transform .12s}
+.btn:active{transform:scale(.97)}
+.btn.ghost{background:rgba(255,255,255,.9);color:var(--g1);border:1.5px solid #d9cdf3;box-shadow:none;margin-top:10px}
+.note{font-size:12px;color:#a09aae;margin-top:12px;line-height:1.8}
+.meta{text-align:center;font-size:13px;color:#6f6a7d;margin-bottom:6px;line-height:2}
+/* 四柱 */
+.pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;text-align:center}
+.pcol{background:linear-gradient(180deg,#ffffff,#faf6ff);border:1px solid #f0e9fb;border-radius:18px;padding:12px 4px 10px;
+  box-shadow:0 4px 12px rgba(124,92,255,.07)}
+.pcol .lab{font-size:11px;color:#a09aae;margin-bottom:8px;letter-spacing:1px}
+.pcol .ss{margin:4px 0}
+.pcol .ss span{display:inline-block;font-size:11px;color:#7c5cff;background:#f1ecff;border-radius:999px;padding:2px 9px}
+.pcol .gan{font-size:37px;font-weight:800;line-height:1.35}
+.pcol .zhi{font-size:37px;font-weight:800;line-height:1.35}
+.pcol .hide{font-size:10px;color:#a09aae;margin-top:8px;line-height:1.9}
+/* 五行 */
+.wxrow{display:flex;align-items:center;margin:9px 0;font-size:14px}
+.wxrow .n{width:22px;font-weight:700}
+.wxbar{flex:1;height:12px;background:#f1ecf9;border-radius:999px;margin:0 10px;overflow:hidden}
+.wxbar i{display:block;height:100%;border-radius:999px;transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.wxrow .c{width:46px;text-align:right;color:var(--muted);font-size:13px}
+/* 大运横滑 */
+#rDayun{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 10px;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none}
+#rDayun::-webkit-scrollbar{display:none}
+.dy{position:relative;min-width:126px;scroll-snap-align:start;cursor:pointer;border-radius:18px;padding:14px 12px;
+  background:rgba(255,255,255,.9);border:1.5px solid #f0e9fb;display:flex;flex-direction:column;gap:6px;
+  transition:transform .15s, border-color .2s;box-shadow:0 4px 12px rgba(124,92,255,.07)}
+.dy:active{transform:scale(.95)}
+.dy .gz{font-size:26px;font-weight:800;letter-spacing:2px}
+.dy .info{font-size:12px;color:var(--muted);line-height:1.7}
+.dy .tag{position:absolute;top:8px;right:8px;font-size:10px;color:#fff;font-weight:700;
+  background:linear-gradient(135deg,var(--g1),var(--g2));border-radius:999px;padding:2px 8px;
+  box-shadow:0 2px 8px rgba(255,107,157,.4)}
+.dy.cur{border-color:transparent;background:linear-gradient(#fff,#fff) padding-box,
+  linear-gradient(135deg,var(--g1),var(--g2)) border-box}
+/* 流年 */
+.ln{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;text-align:center}
+.ln .it{background:rgba(255,255,255,.9);border:1px solid #f0e9fb;border-radius:14px;padding:9px 2px;
+  font-size:11px;line-height:1.8;color:var(--muted);transition:transform .12s}
+.ln .it:active{transform:scale(.93)}
+.ln .it b{font-size:17px;font-weight:800}
+.ln .it.cur{background:linear-gradient(135deg,var(--g1),var(--g2));border:none;color:#fff;
+  box-shadow:0 6px 14px rgba(255,107,157,.35)}
+.ln .it.cur b{color:#fff!important}
+.kv{display:flex;justify-content:space-between;font-size:14px;padding:9px 2px;border-bottom:1px dashed #eee7f7}
+.kv:last-child{border-bottom:none}
+.kv .k{color:var(--muted)}
+.foot{text-align:center;font-size:11px;color:#b3adc2;margin-top:20px;line-height:1.9}
+.hidden{display:none!important}
+.tabs{display:flex;gap:8px;background:rgba(255,255,255,.72);border-radius:16px;padding:5px;margin-bottom:12px;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 4px 14px rgba(124,92,255,.08)}
+.tabs button{flex:1;padding:10px;border:none;border-radius:12px;background:transparent;font-size:15px;color:#7a7390;transition:all .2s}
+.tabs button.on{background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;font-weight:700;
+  box-shadow:0 4px 12px rgba(255,107,157,.35)}
+.xw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -6px;padding:0 6px 4px}
+.xt{border-collapse:separate;border-spacing:0;min-width:620px;width:100%;font-size:13px}
+.xt th,.xt td{padding:9px 6px;text-align:center;vertical-align:top;background:rgba(255,255,255,.8);
+  border-bottom:1px solid #f0e9fb}
+.xt td.lab,.xt td:first-child{background:#f6f1ff;font-size:12px;color:#7a7390;font-weight:700;white-space:nowrap;border-radius:8px 0 0 8px}
+.xt thead td.lab{background:transparent}
+.xt .big{font-size:21px;font-weight:800}
+.xt .ssn{font-size:11px;color:#7c5cff;background:#f1ecff;border-radius:999px;padding:1px 7px;white-space:nowrap}
+.xt .sha{font-size:11px;color:#b8860b;line-height:2}
+.dy .ss10{font-size:11px;color:#7c5cff;background:#f1ecff;border-radius:999px;padding:1px 8px;align-self:flex-start}
+.ln .lnss{font-size:10px;color:#a09aae}
+@keyframes pop{from{opacity:0;transform:translateY(16px) scale(.985)}to{opacity:1;transform:none}}
+#result .card{animation:pop .55s cubic-bezier(.2,.8,.25,1) both}
+#result .card:nth-child(2){animation-delay:.07s}
+#result .card:nth-child(3){animation-delay:.14s}
+#result .card:nth-child(4){animation-delay:.21s}
+#result .card:nth-child(5){animation-delay:.28s}
+/* ===== 星座详解 ===== */
+.xz-hero{display:flex;align-items:center;gap:14px;padding:16px;border-radius:18px;background:linear-gradient(135deg,rgba(124,92,255,.14),rgba(255,107,157,.14));margin-bottom:12px}
+.xz-emoji{font-size:44px;line-height:1}
+.xz-name{font-size:20px;font-weight:800;letter-spacing:2px}
+.xz-dates{font-size:12px;color:var(--muted);margin-top:4px}
+.xz-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.xz-chips span{font-size:12px;padding:5px 12px;border-radius:999px;background:rgba(124,92,255,.10);color:#6f6a7d;border:1px solid rgba(124,92,255,.18)}
+.xz-line{font-size:14px;font-weight:700;text-align:center;padding:12px 14px;border-radius:14px;background:rgba(255,107,157,.10);color:#c2437f;margin-bottom:12px;line-height:1.7}
+.xz-keys{display:flex;flex-wrap:wrap;gap:4px 10px;margin-bottom:4px}
+.xz-keys span{font-size:12px;color:var(--g1);font-weight:700}
+.xz-sec{margin-top:12px}
+.xz-sec h4{font-size:14px;margin:0 0 6px;letter-spacing:1px}
+.xz-sec p{font-size:13px;color:#4a4557;line-height:1.9;margin:0}
+.xz-combo{margin-top:14px;font-size:13px;line-height:1.8;padding:12px 14px;border-radius:14px;background:linear-gradient(135deg,rgba(124,92,255,.12),rgba(255,107,157,.12));border:1px dashed rgba(124,92,255,.35)}
+.xz-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.xz-grid button{border:1px solid rgba(124,92,255,.2);background:rgba(255,255,255,.7);border-radius:12px;padding:8px 4px;font-size:12px;color:#4a4557;cursor:pointer}
+.xz-grid button .e{font-size:20px;display:block;line-height:1.4}
+.xz-grid button.on{background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;border-color:transparent;font-weight:700}
+.xz-back{display:block;margin:10px auto 0;font-size:12px;color:var(--g1);background:none;border:none;cursor:pointer}
+/* 出生地选择弹窗 */
+#placeModal{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.pm-mask{position:absolute;inset:0;background:rgba(40,30,70,.45)}
+.pm-box{position:relative;width:100%;max-width:520px;max-height:84vh;background:#fff;border-radius:24px 24px 0 0;
+padding:18px 16px calc(20px + env(safe-area-inset-bottom));display:flex;flex-direction:column;
+box-shadow:0 -8px 40px rgba(0,0,0,.18);animation:pmUp .25s ease}
+@keyframes pmUp{from{transform:translateY(48px);opacity:.5}to{transform:none;opacity:1}}
+.pm-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+#pmClose{border:none;background:#f3eefb;min-width:40px;height:40px;border-radius:50%;font-size:15px;color:#7a7390}
+.pm-search input{width:100%;min-height:48px;font-size:15px;padding:11px 14px;border:1.5px solid #e9e2f5;border-radius:14px;
+background:#faf8ff;color:var(--ink);outline:none}
+.pm-search input:focus{border-color:var(--g1)}
+.pm-list{overflow-y:auto;margin:10px 0;max-height:42vh;-webkit-overflow-scrolling:touch}
+.pm-it{display:flex;align-items:center;gap:10px;padding:13px 12px;border-radius:14px;font-size:15px;color:var(--ink)}
+.pm-it.sel{background:linear-gradient(135deg,#f0e9ff,#fdeef7);font-weight:700;color:var(--g1)}
+.pm-it .sub{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap}
+#pmOk{margin-top:2px}
+/* 表单内错误提示（替代原生 alert，嵌入环境更可靠） */
+#formErr{background:#fff1f1;border:1.5px solid #ffc4c4;color:#c0392b;border-radius:14px;
+padding:12px 14px;font-size:14px;line-height:1.6;margin:10px 0 2px}
