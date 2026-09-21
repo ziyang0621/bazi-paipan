@@ -136,6 +136,26 @@ h1{font-size:27px;text-align:center;margin:12px 0 6px;letter-spacing:6px;font-we
 .xz-grid button .e{font-size:20px;display:block;line-height:1.4}
 .xz-grid button.on{background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;border-color:transparent;font-weight:700}
 .xz-back{display:block;margin:10px auto 0;font-size:12px;color:var(--g1);background:none;border:none;cursor:pointer}
+/* 出生地选择弹窗 */
+#placeModal{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.pm-mask{position:absolute;inset:0;background:rgba(40,30,70,.45)}
+.pm-box{position:relative;width:100%;max-width:520px;max-height:84vh;background:#fff;border-radius:24px 24px 0 0;
+padding:18px 16px calc(20px + env(safe-area-inset-bottom));display:flex;flex-direction:column;
+box-shadow:0 -8px 40px rgba(0,0,0,.18);animation:pmUp .25s ease}
+@keyframes pmUp{from{transform:translateY(48px);opacity:.5}to{transform:none;opacity:1}}
+.pm-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+#pmClose{border:none;background:#f3eefb;min-width:40px;height:40px;border-radius:50%;font-size:15px;color:#7a7390}
+.pm-search input{width:100%;min-height:48px;font-size:15px;padding:11px 14px;border:1.5px solid #e9e2f5;border-radius:14px;
+background:#faf8ff;color:var(--ink);outline:none}
+.pm-search input:focus{border-color:var(--g1)}
+.pm-list{overflow-y:auto;margin:10px 0;max-height:42vh;-webkit-overflow-scrolling:touch}
+.pm-it{display:flex;align-items:center;gap:10px;padding:13px 12px;border-radius:14px;font-size:15px;color:var(--ink)}
+.pm-it.sel{background:linear-gradient(135deg,#f0e9ff,#fdeef7);font-weight:700;color:var(--g1)}
+.pm-it .sub{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap}
+#pmOk{margin-top:2px}
+/* 表单内错误提示（替代原生 alert，嵌入环境更可靠） */
+#formErr{background:#fff1f1;border:1.5px solid #ffc4c4;color:#c0392b;border-radius:14px;
+padding:12px 14px;font-size:14px;line-height:1.6;margin:10px 0 2px}
 </style>
 </head>
 <body>
@@ -152,9 +172,31 @@ h1{font-size:27px;text-align:center;margin:12px 0 6px;letter-spacing:6px;font-we
 </div></div>
 <div class="row"><label>出生日期（阳历）</label><input type="date" id="fDate"></div>
 <div class="row"><label>出生时间</label><input type="time" id="fTime"></div>
+<div class="row"><label>出生地（选填）</label>
+<div style="display:flex;gap:8px">
+<input type="text" id="fPlace" placeholder="如：北京，或直接输经度 116.4" style="flex:1;min-width:0">
+<button type="button" id="placeBtn" class="btn ghost" style="width:auto;margin-top:0;padding:12px 18px;letter-spacing:0;white-space:nowrap">选择</button>
+</div></div>
+<div class="row"><label>真太阳时校正</label><div class="seg" id="fSolarT">
+<button data-v="1" class="on">开</button><button data-v="0">关</button>
+</div></div>
 <button class="btn" id="goBtn">开始排盘</button>
+<div id="formErr" class="hidden"></div>
 <button class="btn ghost" id="demoBtn">✨ 填入示例体验</button>
-<div class="note">阳历 · 按节气划分月柱 · 时间按北京时间换算；在节气交接前后出生建议核对时刻。<br>结果仅供学习娱乐参考 😌</div>
+<div class="note">阳历 · 按节气划分月柱 · 填写出生地可自动换算真太阳时；在节气交接前后出生建议核对时刻。<br>结果仅供学习娱乐参考 😌</div>
+</div>
+
+<div id="placeModal" class="hidden">
+<div class="pm-mask" id="pmMask"></div>
+<div class="pm-box">
+<div class="pm-head">
+<div class="seg" id="pmTabs" style="flex:1"><button data-v="cn" class="on">国内</button><button data-v="os">海外</button></div>
+<button id="pmClose" aria-label="关闭">✕</button>
+</div>
+<div class="pm-search"><input type="text" id="pmSearch" placeholder="🔍 搜索城市及地区"></div>
+<div class="pm-list" id="pmList"></div>
+<button class="btn" id="pmOk">确定</button>
+</div>
 </div>
 
 <div id="result" class="hidden">
@@ -175,6 +217,16 @@ h1{font-size:27px;text-align:center;margin:12px 0 6px;letter-spacing:6px;font-we
 <div class="card hidden" id="lnCard"><h2 id="lnTitle">流年</h2><div class="ln" id="rLiunian"></div></div>
 
 <div class="card"><h2>其他信息</h2><div id="rMisc"></div></div>
+
+<div class="card"><h2>算法说明</h2><div class="note" style="line-height:2">
+· 按公历日期排盘，月柱以节气（立春、惊蛰……）划分，不是农历初一。<br>
+· 真太阳时 = 输入时间 − 夏令时（如适用）+（出生地经度 − 时区标准经度）× 4分钟/度 + 时差方程；输入时间视为出生地所在时区的标准时间。<br>
+· 1986–1991 年中国夏令时已自动回拨 1 小时。<br>
+· 大运顺逆：阳年男命、阴年女命顺排，反之逆排。<br>
+· 神煞流派众多，此处取常见规则，仅供参考。<br>
+· 排盘全程在本地完成，生辰数据不上传。<br>
+· 结果仅供学习娱乐参考 😌
+</div></div>
 </div><!-- /paneJian -->
 <div id="paneXi" class="hidden">
 <div class="card"><h2>专业细盘</h2>
@@ -8833,6 +8885,95 @@ Array.prototype.forEach.call($('fGender').querySelectorAll('button'),function(b)
     b.classList.add('on');
   });
 });
+Array.prototype.forEach.call($('fSolarT').querySelectorAll('button'),function(b){
+  b.addEventListener('click',function(){
+    solarTOn=b.getAttribute('data-v')==='1';
+    Array.prototype.forEach.call($('fSolarT').querySelectorAll('button'),function(x){x.classList.remove('on');});
+    b.classList.add('on');
+  });
+});
+/* ===== 表单错误提示（替代原生 alert） ===== */
+function showFormErr(m){
+  var e=$('formErr');
+  e.textContent=m;
+  e.classList.remove('hidden');
+  try{e.scrollIntoView({behavior:'smooth',block:'center'});}catch(err){}
+}
+function hideFormErr(){$('formErr').classList.add('hidden');}
+['fDate','fTime','fPlace'].forEach(function(id){
+  $(id).addEventListener('input',hideFormErr);
+});
+/* ===== 出生地选择弹窗（参考问真：国内先选省再选城市，海外按国家+搜索） ===== */
+var pmTab='cn', pmSel='', pmProv=null;
+function pmLngStr(lng){return (lng<0?'西经':'东经')+Math.abs(lng)+'°';}
+function pmProvs(){
+  var seen={},out=[];
+  PLACES.forEach(function(p){if(p[0]!=='cn')return;if(!seen[p[1]]){seen[p[1]]=1;out.push(p[1]);}});
+  return out;
+}
+function pmProvCount(prov){var n=0;PLACES.forEach(function(p){if(p[0]==='cn'&&p[1]===prov)n++;});return n;}
+function pmItem(v,sel,main,sub){
+  return '<div class="pm-it'+(sel?' sel':'')+'" data-v="'+v+'"><span>'+main+'</span><span class="sub">'+sub+'</span></div>';
+}
+function pmRender(){
+  var kw=$('pmSearch').value.trim();
+  var h=pmItem('',pmSel==='','未知地','北京时间 · 不校正');
+  if(pmTab==='cn'&&!kw){
+    if(!pmProv){
+      /* 省份列表 */
+      pmProvs().forEach(function(prov){
+        h+='<div class="pm-it pm-prov" data-prov="'+prov+'"><span>'+prov+'</span><span class="sub">'+pmProvCount(prov)+' 个城市 ›</span></div>';
+      });
+    }else{
+      /* 该省城市 */
+      h+='<div class="pm-it pm-back" data-back="1"><span>‹ 返回全部省份</span><span class="sub">'+pmProv+'</span></div>';
+      PLACES.forEach(function(p){
+        if(p[0]!=='cn'||p[1]!==pmProv)return;
+        h+=pmItem(p[2],pmSel===p[2],p[2],p[1]+' · '+pmLngStr(p[3]));
+      });
+    }
+  }else{
+    /* 海外 tab 或搜索：扁平列表 */
+    PLACES.forEach(function(p){
+      if(p[0]!==pmTab)return;
+      if(kw&&(p[1]+p[2]).indexOf(kw)<0)return;
+      h+=pmItem(p[2],pmSel===p[2],p[2],p[1]+' · '+pmLngStr(p[3]));
+    });
+  }
+  $('pmList').innerHTML=h;
+  Array.prototype.forEach.call($('pmList').querySelectorAll('.pm-it'),function(el){
+    el.addEventListener('click',function(){
+      if(el.getAttribute('data-back')){pmProv=null;pmRender();return;}
+      var prov=el.getAttribute('data-prov');
+      if(prov){pmProv=prov;pmRender();return;}
+      pmSel=el.getAttribute('data-v');
+      Array.prototype.forEach.call($('pmList').querySelectorAll('.pm-it[data-v]'),function(x){x.classList.remove('sel');});
+      el.classList.add('sel');
+    });
+  });
+}
+function pmOpen(){
+  pmSel=$('fPlace').value.trim();
+  $('pmSearch').value='';
+  $('placeModal').classList.remove('hidden');
+  pmRender();
+}
+function pmClose(){$('placeModal').classList.add('hidden');}
+$('placeBtn').addEventListener('click',pmOpen);
+$('pmClose').addEventListener('click',pmClose);
+$('pmMask').addEventListener('click',pmClose);
+$('pmOk').addEventListener('click',function(){$('fPlace').value=pmSel;pmClose();});
+Array.prototype.forEach.call($('pmTabs').querySelectorAll('button'),function(b){
+  b.addEventListener('click',function(){
+    pmTab=b.getAttribute('data-v');
+    pmProv=null;
+    Array.prototype.forEach.call($('pmTabs').querySelectorAll('button'),function(x){x.classList.remove('on');});
+    b.classList.add('on');
+    $('pmSearch').value='';
+    pmRender();
+  });
+});
+$('pmSearch').addEventListener('input',pmRender);
 $('tabJian').addEventListener('click',function(){switchTab('jian');});
 $('tabXi').addEventListener('click',function(){switchTab('xi');});
 $('tabXz').addEventListener('click',function(){switchTab('xz');});
@@ -8856,16 +8997,183 @@ $('goBtn').addEventListener('click',doPaipan);
 
 var lastDaYun=null;
 
+/* ===== 真太阳时校正 =====
+   真太阳时 = 输入时间 − 夏令时(如适用) + (出生地经度 − 时区标准经度)×4分钟/度 + 时差方程
+   输入时间视为出生地所在时区的标准时间 */
+var PLACES=[
+/* [内外, 省份/国家, 城市, 经度, 时区标准经度] */
+/* ---- 国内：先选省，再选城市 ---- */
+['cn','北京市','北京',116.40,120],['cn','天津市','天津',117.20,120],
+['cn','河北省','石家庄',114.51,120],['cn','河北省','唐山',118.18,120],
+['cn','河北省','保定',115.46,120],['cn','河北省','邯郸',114.54,120],
+['cn','山西省','太原',112.55,120],['cn','山西省','大同',113.30,120],
+['cn','山西省','运城',111.01,120],
+['cn','内蒙古','呼和浩特',111.75,120],['cn','内蒙古','包头',109.84,120],
+['cn','内蒙古','鄂尔多斯',109.78,120],
+['cn','辽宁省','沈阳',123.43,120],['cn','辽宁省','大连',121.61,120],
+['cn','辽宁省','鞍山',122.99,120],['cn','辽宁省','锦州',121.13,120],
+['cn','吉林省','长春',125.32,120],['cn','吉林省','吉林市',126.55,120],
+['cn','吉林省','延吉',129.51,120],
+['cn','黑龙江省','哈尔滨',126.53,120],['cn','黑龙江省','大庆',125.10,120],
+['cn','黑龙江省','齐齐哈尔',123.92,120],
+['cn','上海市','上海',121.47,120],
+['cn','江苏省','南京',118.78,120],['cn','江苏省','苏州',120.58,120],
+['cn','江苏省','无锡',120.30,120],['cn','江苏省','常州',119.98,120],
+['cn','江苏省','南通',120.86,120],['cn','江苏省','徐州',117.19,120],
+['cn','江苏省','扬州',119.41,120],
+['cn','浙江省','杭州',120.15,120],['cn','浙江省','宁波',121.55,120],
+['cn','浙江省','温州',120.70,120],['cn','浙江省','嘉兴',120.76,120],
+['cn','浙江省','绍兴',120.58,120],['cn','浙江省','金华',119.65,120],
+['cn','浙江省','义乌',120.07,120],
+['cn','安徽省','合肥',117.28,120],['cn','安徽省','芜湖',118.43,120],
+['cn','安徽省','蚌埠',117.36,120],
+['cn','福建省','福州',119.30,120],['cn','福建省','厦门',118.09,120],
+['cn','福建省','泉州',118.68,120],['cn','福建省','漳州',117.65,120],
+['cn','福建省','莆田',119.01,120],
+['cn','江西省','南昌',115.86,120],['cn','江西省','赣州',114.93,120],
+['cn','江西省','九江',116.00,120],
+['cn','山东省','济南',117.12,120],['cn','山东省','青岛',120.38,120],
+['cn','山东省','烟台',121.45,120],['cn','山东省','潍坊',119.16,120],
+['cn','山东省','临沂',118.36,120],['cn','山东省','淄博',118.06,120],
+['cn','河南省','郑州',113.63,120],['cn','河南省','洛阳',112.45,120],
+['cn','河南省','开封',114.35,120],['cn','河南省','新乡',113.93,120],
+['cn','湖北省','武汉',114.30,120],['cn','湖北省','襄阳',112.12,120],
+['cn','湖北省','宜昌',111.29,120],
+['cn','湖南省','长沙',112.94,120],['cn','湖南省','株洲',113.13,120],
+['cn','湖南省','衡阳',112.57,120],['cn','湖南省','岳阳',113.13,120],
+['cn','广东省','广州',113.26,120],['cn','广东省','深圳',114.06,120],
+['cn','广东省','佛山',113.12,120],['cn','广东省','东莞',113.75,120],
+['cn','广东省','珠海',113.58,120],['cn','广东省','中山',113.39,120],
+['cn','广东省','惠州',114.42,120],['cn','广东省','江门',113.08,120],
+['cn','广东省','汕头',116.68,120],['cn','广东省','湛江',110.36,120],
+['cn','广东省','肇庆',112.47,120],['cn','广东省','揭阳',116.37,120],
+['cn','广东省','茂名',110.92,120],
+['cn','广西','南宁',108.32,120],['cn','广西','桂林',110.29,120],
+['cn','广西','柳州',109.43,120],
+['cn','海南省','海口',110.35,120],['cn','海南省','三亚',109.51,120],
+['cn','重庆市','重庆',106.55,120],
+['cn','四川省','成都',104.07,120],['cn','四川省','绵阳',104.68,120],
+['cn','四川省','德阳',104.40,120],
+['cn','贵州省','贵阳',106.63,120],['cn','贵州省','遵义',106.93,120],
+['cn','云南省','昆明',102.83,120],['cn','云南省','大理',100.27,120],
+['cn','云南省','玉溪',102.55,120],
+['cn','西藏','拉萨',91.14,120],['cn','西藏','日喀则',88.88,120],
+['cn','陕西省','西安',108.94,120],['cn','陕西省','宝鸡',107.24,120],
+['cn','陕西省','咸阳',108.71,120],
+['cn','甘肃省','兰州',103.83,120],['cn','甘肃省','天水',105.72,120],
+['cn','青海省','西宁',101.78,120],
+['cn','宁夏','银川',106.23,120],
+['cn','新疆','乌鲁木齐',87.62,120],['cn','新疆','喀什',76.00,120],
+['cn','新疆','伊宁',81.32,120],
+['cn','香港','香港',114.17,120],
+['cn','澳门','澳门',113.55,120],
+['cn','台湾','台北',121.57,120],['cn','台湾','台中',120.68,120],
+['cn','台湾','高雄',120.31,120],
+/* ---- 海外 ---- */
+['os','美国','旧金山',-122.42,-120],['os','美国','洛杉矶',-118.24,-120],
+['os','美国','圣迭戈',-117.16,-120],['os','美国','圣何塞',-121.89,-120],
+['os','美国','西雅图',-122.33,-120],['os','美国','波特兰',-122.68,-120],
+['os','美国','拉斯维加斯',-115.14,-120],['os','美国','丹佛',-104.99,-105],
+['os','美国','达拉斯',-96.80,-90],['os','美国','奥斯汀',-97.74,-90],
+['os','美国','休斯顿',-95.37,-90],['os','美国','芝加哥',-87.63,-90],
+['os','美国','明尼阿波利斯',-93.27,-90],['os','美国','亚特兰大',-84.39,-75],
+['os','美国','迈阿密',-80.19,-75],['os','美国','纽约',-73.99,-75],
+['os','美国','波士顿',-71.06,-75],['os','美国','费城',-75.17,-75],
+['os','美国','华盛顿',-77.04,-75],
+['os','加拿大','温哥华',-123.12,-120],['os','加拿大','卡尔加里',-114.07,-105],
+['os','加拿大','多伦多',-79.38,-75],['os','加拿大','蒙特利尔',-73.57,-75],
+['os','加拿大','渥太华',-75.70,-75],
+['os','英国','伦敦',-0.12,0],['os','英国','曼彻斯特',-2.24,0],
+['os','英国','爱丁堡',-3.19,0],
+['os','法国','巴黎',2.35,15],['os','法国','里昂',4.83,15],
+['os','法国','马赛',5.37,15],
+['os','德国','柏林',13.41,15],['os','德国','慕尼黑',11.58,15],
+['os','德国','法兰克福',8.68,15],['os','德国','汉堡',9.99,15],
+['os','西班牙','马德里',-3.70,15],['os','西班牙','巴塞罗那',2.17,15],
+['os','意大利','罗马',12.50,15],['os','意大利','米兰',9.19,15],
+['os','荷兰','阿姆斯特丹',4.90,15],
+['os','瑞士','苏黎世',8.54,15],['os','瑞士','日内瓦',6.14,15],
+['os','奥地利','维也纳',16.37,15],
+['os','瑞典','斯德哥尔摩',18.07,15],
+['os','挪威','奥斯陆',10.75,15],
+['os','俄罗斯','莫斯科',37.62,45],['os','俄罗斯','圣彼得堡',30.34,45],
+['os','阿联酋','迪拜',55.27,60],
+['os','日本','东京',139.69,135],['os','日本','大阪',135.50,135],
+['os','日本','京都',135.77,135],['os','日本','名古屋',136.91,135],
+['os','日本','福冈',130.40,135],['os','日本','札幌',141.35,135],
+['os','韩国','首尔',126.98,135],['os','韩国','釜山',129.08,135],
+['os','新加坡','新加坡',103.82,120],
+['os','马来西亚','吉隆坡',101.70,120],['os','马来西亚','槟城',100.33,120],
+['os','泰国','曼谷',100.50,105],['os','泰国','清迈',98.99,105],
+['os','越南','胡志明市',106.66,105],['os','越南','河内',105.85,105],
+['os','菲律宾','马尼拉',120.98,120],
+['os','印度尼西亚','雅加达',106.85,105],['os','印度尼西亚','巴厘岛',115.22,120],
+['os','印度','孟买',72.88,82.5],['os','印度','新德里',77.21,82.5],
+['os','澳大利亚','悉尼',151.21,150],['os','澳大利亚','墨尔本',144.96,150],
+['os','澳大利亚','布里斯班',153.03,150],['os','澳大利亚','珀斯',115.86,120],
+['os','澳大利亚','阿德莱德',138.60,142.5],
+['os','新西兰','奥克兰',174.76,180],
+['os','埃及','开罗',31.24,30],
+['os','南非','约翰内斯堡',28.05,30],['os','南非','开普敦',18.42,30],
+['os','巴西','圣保罗',-46.63,-45]
+];
+var CITY_LNG={};
+PLACES.forEach(function(p){CITY_LNG[p[2]]=[p[3],p[4]];});
+/* 中国夏令时 1986–1991：每年开始日02:00拨快1小时，结束日02:00拨回 */
+var CN_DST=[['1986-05-04','1986-09-14'],['1987-04-12','1987-09-13'],['1988-04-17','1988-09-11'],
+['1989-04-16','1989-09-17'],['1990-04-15','1990-09-16'],['1991-04-14','1991-09-15']];
+function inCnDst(dt){
+  var t=dt.getTime();
+  for(var i=0;i<CN_DST.length;i++){
+    var a=CN_DST[i][0].split('-'),b=CN_DST[i][1].split('-');
+    var s=new Date(+a[0],+a[1]-1,+a[2],2,0,0).getTime();
+    var e=new Date(+b[0],+b[1]-1,+b[2],2,0,0).getTime();
+    if(t>=s&&t<e)return true;
+  }
+  return false;
+}
+function eotMinutes(dt){ /* 时差方程(分)：视太阳时 − 平太阳时，近似公式 */
+  var n=Math.floor((dt-new Date(dt.getFullYear(),0,1))/86400000)+1;
+  var B=2*Math.PI*(n-81)/364;
+  return 9.87*Math.sin(2*B)-7.53*Math.cos(B)-1.5*Math.sin(B);
+}
+var solarTOn=true;
+function trueSolar(birth,place){
+  if(!solarTOn||!place)return {date:birth,applied:false};
+  var lng=null,std=120,pn=place;
+  if(CITY_LNG[place]){lng=CITY_LNG[place][0];std=CITY_LNG[place][1];}
+  else{var m=place.match(/^(-?\d+(\.\d+)?)\s*[°度]?$/);if(m){lng=parseFloat(m[1]);pn='东经'+lng+'°';}}
+  if(lng===null||isNaN(lng))return {date:birth,applied:false};
+  var corr=0,notes=[];
+  if(std===120&&inCnDst(birth)){corr-=60;notes.push('夏令时−60分钟');}
+  var lonCorr=(lng-std)*4, eot=eotMinutes(birth);
+  corr+=lonCorr+eot;
+  if(lonCorr)notes.push('经度'+(lonCorr>=0?'+':'')+lonCorr.toFixed(1)+'分钟');
+  notes.push('时差方程'+(eot>=0?'+':'')+eot.toFixed(1)+'分钟');
+  return {date:new Date(birth.getTime()+corr*60000),applied:true,minutes:corr,place:pn,notes:notes.join('，')};
+}
+
 function doPaipan(){
+  hideFormErr();
   var name=$('fName').value.trim();
   var d=$('fDate').value, t=$('fTime').value;
-  if(!d){alert('请选择出生日期');return;}
-  if(!t){alert('请选择出生时间');return;}
+  if(!d){showFormErr('请先选择出生日期 📅');return;}
+  if(!t){showFormErr('请先选择出生时间 ⏰');return;}
   var dp=d.split('-'), tp=t.split(':');
-  var solar=Solar.fromYmdHms(+dp[0],+dp[1],+dp[2],+tp[0],+tp[1],0);
+  var birth0=new Date(+dp[0],+dp[1]-1,+dp[2],+tp[0],+tp[1]);
+  var place=$('fPlace').value.trim();
+  var tsc=trueSolar(birth0,place);
+  if(solarTOn&&place&&!tsc.applied){
+    showFormErr('找不到出生地"'+place+'"😅 请点"选择"从列表里挑，或直接输入经度（如 116.4）');
+    return;
+  }
+  var c=tsc.date;
+  var solar=Solar.fromYmdHms(c.getFullYear(),c.getMonth()+1,c.getDate(),c.getHours(),c.getMinutes(),0);
   var lunar=solar.getLunar();
   var ec=lunar.getEightChar();
   var dg=ec.getDayGan();
+  function pad2(n){return (n<10?'0':'')+n;}
+  var cTimeStr=pad2(c.getHours())+':'+pad2(c.getMinutes());
 
   /* ===== 简盘 ===== */
   var shengxiao='';
@@ -8873,6 +9181,10 @@ function doPaipan(){
   $('rMeta').innerHTML=
     (name?esc(name)+' · ':'')+esc(gender)+' · 公历 '+esc(d)+' '+esc(t)+
     (shengxiao?'<br>属'+esc(shengxiao):'');
+  if(tsc.applied){
+    var sgn=tsc.minutes>=0?'+':'−';
+    $('rMeta').innerHTML+='<br>真太阳时 <b>'+cTimeStr+'</b>（'+esc(tsc.place)+'，校正 '+sgn+Math.abs(Math.round(tsc.minutes))+' 分钟）';
+  }
   var cols=[
     {lab:'年柱',gan:ec.getYearGan(),zhi:ec.getYearZhi(),ssg:ec.getYearShiShenGan(),hide:ec.getYearHideGan(),ssz:ec.getYearShiShenZhi()},
     {lab:'月柱',gan:ec.getMonthGan(),zhi:ec.getMonthZhi(),ssg:ec.getMonthShiShenGan(),hide:ec.getMonthHideGan(),ssz:ec.getMonthShiShenZhi()},
@@ -8945,7 +9257,7 @@ function doPaipan(){
   /* ===== 细盘 ===== */
   renderXipan(ec,dg,curDy,curLn);
   /* ===== 基本信息 ===== */
-  renderBasic(lunar,solar,ec,dp,tp);
+  renderBasic(lunar,solar,ec,[c.getFullYear(),c.getMonth()+1,c.getDate()],[c.getHours(),c.getMinutes()],tsc);
   /* ===== 星座详解 ===== */
   renderXingzuo(solar,dg);
 
@@ -9024,9 +9336,10 @@ function renderXipan(ec,dg,curDy,curLn){
 }
 
 /* ---------- 基本信息 ---------- */
-function renderBasic(lunar,solar,ec,dp,tp){
+function renderBasic(lunar,solar,ec,dp,tp,tsc){
   function parseYmdHms(s){var a=s.split(/[- :]/);return new Date(+a[0],+a[1]-1,+a[2],+a[3],+a[4],+a[5]||0);}
   function fmtDur(ms){var h=Math.max(0,Math.round(ms/3600000));var d=Math.floor(h/24);h=h%24;return d+'天'+h+'小时';}
+  function pad2(n){return (n<10?'0':'')+n;}
   var birth=new Date(+dp[0],+dp[1]-1,+dp[2],+tp[0],+tp[1]);
   var pj=lunar.getPrevJie(), nj=lunar.getNextJie();
   var jieqi='出生于'+pj.getName()+'后'+fmtDur(birth-parseYmdHms(pj.getSolar().toYmdHms()))+'，'+nj.getName()+'前'+fmtDur(parseYmdHms(nj.getSolar().toYmdHms())-birth);
@@ -9037,6 +9350,7 @@ function renderBasic(lunar,solar,ec,dp,tp){
     ['星座',xingzuo],
     ['星宿',xiu],
     ['出生节气',jieqi],
+    ['真太阳时',tsc&&tsc.applied?pad2(birth.getHours())+':'+pad2(birth.getMinutes())+'（'+esc(tsc.place)+'：'+esc(tsc.notes)+'）':'未校正（可填写出生地开启）'],
     ['胎元',ec.getTaiYuan()+'（'+ec.getTaiYuanNaYin()+'）'],
     ['胎息',ec.getTaiXi()+'（'+ec.getTaiXiNaYin()+'）'],
     ['命宫',ec.getMingGong()+'（'+ec.getMingGongNaYin()+'）'],
